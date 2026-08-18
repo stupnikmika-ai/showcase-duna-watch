@@ -1,0 +1,58 @@
+name: Vigia Duna - IMAX Norcenter
+
+on:
+  schedule:
+    # 6 veces por dia, cada 4 horas (UTC). En hora de Argentina: 21, 01, 05, 09, 13, 17.
+    - cron: "0 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Chequear aunque falte para la ventana de 80 dias"
+        type: boolean
+        default: false
+      simulate:
+        description: "Inyectar una Duna falsa para probar el aviso de punta a punta"
+        type: boolean
+        default: false
+
+concurrency:
+  group: duna-watch
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Guarda state.json entre corridas para no repetir el aviso.
+      # Se accede cada 4 h, asi que la cache nunca se enfria.
+      - name: Restaurar estado
+        uses: actions/cache@v4
+        with:
+          path: state.json
+          key: duna-state-${{ github.run_id }}
+          restore-keys: |
+            duna-state-
+
+      - name: Chequear cartelera
+        env:
+          CHANNELS: telegram
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
+          RELEASE_DATE: ${{ vars.RELEASE_DATE || '2026-12-14' }}
+          WATCH_DAYS_BEFORE: ${{ vars.WATCH_DAYS_BEFORE || '80' }}
+          WATCH_DAYS_AFTER: ${{ vars.WATCH_DAYS_AFTER || '0' }}
+          PRE_WINDOW_MODE: ${{ vars.PRE_WINDOW_MODE || 'off' }}
+          WATCHDOG: ${{ vars.WATCHDOG || 'on' }}
+          KEYWORDS: ${{ vars.KEYWORDS || 'duna,dune' }}
+          MACOS_NOTIFY: "0"
+        run: |
+          ARGS=""
+          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --ignore-window"; fi
+          if [ "${{ inputs.simulate }}" = "true" ]; then ARGS="$ARGS --simulate"; fi
+          python3 watch.py $ARGS

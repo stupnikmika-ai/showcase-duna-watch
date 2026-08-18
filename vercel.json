@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/check.py": {
+      "runtime": "@vercel/python@4.3.1",
+      "maxDuration": 60,
+      "includeFiles": "api/_lib/**"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/check",
+      "schedule": "0 */4 * * *"
+    }
+  ]
+}
