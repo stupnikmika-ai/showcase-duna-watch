@@ -2,8 +2,11 @@ name: Vigia Duna - IMAX Norcenter
 
 on:
   schedule:
-    # 6 veces por dia, cada 4 horas (UTC). En hora de Argentina: 21, 01, 05, 09, 13, 17.
-    - cron: "0 */4 * * *"
+    # Cada 2 h en un minuto poco congestionado = 12 intentos por dia.
+    # GitHub saltea corridas programadas bajo carga (medido: con "0 */4 * * *"
+    # salian 4 de 6). Sobredimensionar es la unica forma de garantizar las 6
+    # reales que se pidieron; los chequeos de mas son mudos y no cuestan nada.
+    - cron: "23 */2 * * *"
   workflow_dispatch:
     inputs:
       force:
