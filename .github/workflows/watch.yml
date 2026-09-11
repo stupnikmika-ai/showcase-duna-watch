@@ -2,15 +2,15 @@ name: Vigia Duna - IMAX Norcenter
 
 on:
   schedule:
-    # Cada 2 h en un minuto poco congestionado = 12 intentos por dia.
-    # GitHub saltea corridas programadas bajo carga (medido: con "0 */4 * * *"
-    # salian 4 de 6). Sobredimensionar es la unica forma de garantizar las 6
-    # reales que se pidieron; los chequeos de mas son mudos y no cuestan nada.
-    - cron: "23 */2 * * *"
+    # Cada hora, en un minuto poco congestionado (":00" es el peor) = 24
+    # intentos por dia. GitHub saltea corridas programadas bajo carga: medido
+    # con "0 */4 * * *" salian 4 de las 6 pedidas. Sobredimensionar es la unica
+    # forma de garantizar un piso real; los chequeos de mas son mudos.
+    - cron: "23 * * * *"
   workflow_dispatch:
     inputs:
       force:
-        description: "Chequear aunque falte para la ventana de 80 dias"
+        description: "Chequear aunque la ventana este cerrada"
         type: boolean
         default: false
       simulate:

@@ -37,7 +37,7 @@ No chequea todo el año. Por defecto:
 estreno            2026-12-14   (RELEASE_DATE)
 empieza a chequear 2026-09-25   (80 días antes, WATCH_DAYS_BEFORE)
 corta              2026-12-14   (WATCH_DAYS_AFTER=0)
-frecuencia         6 veces por día (cada 4 h)
+frecuencia         1 intento por hora (24/día)
 ```
 
 Fuera de esa ventana el script sale sin hacer nada. Si el estreno se corre, mover
@@ -105,14 +105,19 @@ mentía.
 
 ### GitHub Actions (recomendado)
 
-`.github/workflows/watch.yml` ya está listo: cron cada 4 h, gratis, sin límite de
-plan. Push del repo y después:
+`.github/workflows/watch.yml` ya está listo: cron `23 * * * *`, gratis, sin
+límite de plan. Push del repo y después:
 
 - **Secrets** → `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_IDS`
 - **Variables** (opcional) → `RELEASE_DATE`, `WATCH_DAYS_BEFORE`, `WATCHDOG`
 
-El estado va en `actions/cache`, que se accede cada 4 h y no se enfría. Para
+El estado va en `actions/cache`, que se accede cada hora y no se enfría. Para
 probar: *Actions → Vigía Duna → Run workflow* con `force` y/o `simulate`.
+
+**Por qué cada hora y no cada 4 h:** GitHub saltea corridas programadas cuando
+tiene carga. Medido sobre 106 corridas, `0 */4 * * *` (6 programadas) ejecutaba
+4 por día. Con 24 intentos el piso real queda muy por encima de lo necesario.
+El minuto `:23` evita el `:00`, que es el más congestionado.
 
 ### Vercel
 
