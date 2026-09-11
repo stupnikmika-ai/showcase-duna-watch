@@ -93,6 +93,14 @@ python3 watch.py --reset          # olvidar lo ya avisado
 mensaje → envío) con una película falsa y **no** marca nada como avisado, así que
 el aviso real sigue intacto.
 
+Todo mensaje de prueba sale marcado: el asunto arranca con **`[PRUEBA]`** y el
+cuerpo lleva un cartel arriba y abajo aclarando que no apareció ninguna película.
+Un aviso de verdad nunca los tiene, así que no hay forma de confundirlos.
+
+El asunto nombra **la película que realmente matcheó** (`"Duna: Parte Tres" ya
+está EN VENTA…`). Antes decía "DUNA" fijo, y si matcheaba otra cosa el mensaje
+mentía.
+
 ## Dejarlo corriendo
 
 ### GitHub Actions (recomendado)

@@ -75,7 +75,7 @@ def cmd_all_cinemas():
 def cmd_test_notify(cfg, dry):
     log = core.Logger()
     win = core.window_status(cfg)
-    subject = "Prueba del vigia Duna / IMAX Norcenter"
+    subject = core.PRUEBA_TAG + " Vigia Duna / IMAX Norcenter"
     text = ("Esto es una prueba. Si lo estas leyendo, el aviso funciona.\n\n"
             "Cuando 'Duna' o 'Dune' aparezca en la cartelera del %s te llega un "
             "mensaje como este.\n\nVigilo desde el %s hasta el %s (estreno %s), "

@@ -148,16 +148,32 @@ def _esc(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def build_alert(new, upgraded, all_films, win):
-    on_sale = [f for f in new + upgraded if f.anticipada]
-    if on_sale:
-        subject = "DUNA ya esta EN VENTA en el IMAX de Norcenter"
-    else:
-        subject = "DUNA aparecio en la cartelera del IMAX de Norcenter"
+PRUEBA_TAG = "[PRUEBA]"
+PRUEBA_BANNER = ("*** ESTO ES UNA PRUEBA. No apareció ninguna película nueva: "
+                 "es una corrida de verificación del sistema. ***")
 
-    lines = ["Complejo: %s (house_id %s)" % (CINEMA, showcase.TARGET_HOUSE_ID),
-             "Estreno estimado: %s (faltan %d dias)" % (win["release"], win["days_to_release"]),
-             ""]
+
+def build_alert(new, upgraded, all_films, win, test=False):
+    hits = new + upgraded
+    on_sale = [f for f in hits if f.anticipada]
+    # El titulo real va en el asunto: hardcodear "DUNA" hacia que el aviso
+    # mintiera si matcheaba otra cosa o si se cambiaban las KEYWORDS.
+    names = ", ".join('"%s"' % f.title for f in hits[:2])
+    if len(hits) > 2:
+        names += " (+%d mas)" % (len(hits) - 2)
+    if not names:
+        names = "Una pelicula"
+    subject = ("%s ya esta EN VENTA en el IMAX de Norcenter" if on_sale
+               else "%s aparecio en la cartelera del IMAX de Norcenter") % names
+    if test:
+        subject = PRUEBA_TAG + " " + subject
+
+    lines = []
+    if test:
+        lines += [PRUEBA_BANNER, ""]
+    lines += ["Complejo: %s (house_id %s)" % (CINEMA, showcase.TARGET_HOUSE_ID),
+              "Estreno estimado: %s (faltan %d dias)" % (win["release"], win["days_to_release"]),
+              ""]
     for f in new:
         lines.append("NUEVO EN CARTELERA: " + film_line(f))
         if f.filmid:
@@ -170,6 +186,8 @@ def build_alert(new, upgraded, all_films, win):
     lines += ["  - " + film_line(f) for f in all_films]
     lines += ["", "Cartelera: " + showcase.HOME_URL + "#dropdown_films",
               "Chequeado: " + stamp()]
+    if test:
+        lines += ["", PRUEBA_BANNER]
     text = "\n".join(lines)
 
     rows = []
@@ -178,14 +196,17 @@ def build_alert(new, upgraded, all_films, win):
             link = ((' &middot; <a href="%s">Comprar entradas</a>' % (BUY_URL % f.filmid))
                     if f.filmid else "")
             rows.append("<li><b>%s:</b> %s%s</li>" % (label, _esc(film_line(f)), link))
+    banner_html = ('<p style="background:#fde68a;color:#713f12;padding:10px 12px;'
+                   'border-radius:6px;margin:0 0 12px"><b>%s</b></p>' % _esc(PRUEBA_BANNER)
+                   ) if test else ""
     html_body = (
         '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5">'
-        '<h2 style="margin:0 0 8px">%s</h2>'
+        '%s<h2 style="margin:0 0 8px">%s</h2>'
         '<p style="margin:0 0 12px;color:#555">%s &middot; house_id %s &middot; estreno %s</p>'
         "<ul>%s</ul>"
         '<p style="margin:16px 0 4px"><b>Cartelera completa del IMAX ahora (%d):</b></p><ul>%s</ul>'
         '<p style="color:#777;font-size:13px">Chequeado %s &middot; <a href="%s">ver cartelera</a></p></div>'
-    ) % (_esc(subject), _esc(CINEMA), showcase.TARGET_HOUSE_ID, win["release"],
+    ) % (banner_html, _esc(subject), _esc(CINEMA), showcase.TARGET_HOUSE_ID, win["release"],
          "".join(rows), len(all_films),
          "".join("<li>%s</li>" % _esc(film_line(f)) for f in all_films),
          _esc(stamp()), showcase.HOME_URL)
@@ -330,7 +351,7 @@ def run_check(cfg, dry=False, simulate=None, ignore_window=False, log=None,
             _save(store, st, log)
         return out
 
-    subject, text, html_body = build_alert(new, upgraded, films, win)
+    subject, text, html_body = build_alert(new, upgraded, films, win, test=bool(simulate))
     log("!! MATCH: %s" % ", ".join(f.title for f in new + upgraded))
     res = do_notify(subject, text, html_body, cfg, dry, log)
     out["alerted"] = True
