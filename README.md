@@ -163,6 +163,13 @@ Params: `?force` (ignora la ventana), `?dry` (no manda), `?simulate=Titulo`.
 dormida corre al despertar. Es el único de los dos que alcanza esa frecuencia.
 Su límite es obvio: sólo chequea con la Mac prendida.
 
+> **El proyecto NO puede vivir en `~/Desktop`.** macOS protege Desktop, Documents
+> y Downloads con TCC, y un agente de launchd sin Full Disk Access no puede leer
+> ahí: falla con `exit 126 / Operation not permitted` y ni siquiera llega a
+> ejecutar `run.sh`. Por eso vive en **`~/showcase-duna-watch`**, con un symlink
+> de cortesía en `~/Desktop/Claude_Code/showcase-duna-watch`. Si lo movés de
+> vuelta a Desktop, el launchd se rompe en silencio.
+
 Los dos corren en paralelo y **tienen estados separados** (la Mac usa
 `state.json`, GitHub usa `actions/cache`), así que cuando Duna aparezca es
 probable que el aviso llegue dos veces, una por cada lado. Es redundancia, no un
