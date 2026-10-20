@@ -37,7 +37,7 @@ No chequea todo el año. Por defecto:
 estreno            2026-12-14   (RELEASE_DATE)
 empieza a chequear 2026-09-25   (80 días antes, WATCH_DAYS_BEFORE)
 corta              2026-12-14   (WATCH_DAYS_AFTER=0)
-frecuencia         cada 5 min en la Mac (launchd) + ~5/día en GitHub
+frecuencia         cada 5 min en la Mac (launchd) y en GitHub (*/5)
 ```
 
 Fuera de esa ventana el script sale sin hacer nada. Si el estreno se corre, mover
@@ -105,8 +105,11 @@ mentía.
 
 ### GitHub Actions (recomendado)
 
-`.github/workflows/watch.yml` ya está listo: cron `23 * * * *`, gratis, sin
-límite de plan. Push del repo y después:
+`.github/workflows/watch.yml` ya está listo: cron `*/5 * * * *`, el mínimo que
+acepta GitHub. **El repo es público a propósito**: en repos públicos Actions es
+gratis e ilimitado, mientras que en privado `*/5` serían ~8.640 min/mes contra
+2.000 de cupo (~USD 53/mes). No hay nada sensible en el código ni en el
+historial — el token y los chat ids viven en Secrets. Después del push:
 
 - **Secrets** → `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_IDS`
 - **Variables** (opcional) → `RELEASE_DATE`, `WATCH_DAYS_BEFORE`, `WATCHDOG`
@@ -121,12 +124,13 @@ probar: *Actions → Vigía Duna → Run workflow* con `force` y/o `simulate`.
 2. Aunque se pida más, GitHub no lo ejecuta. Medido sobre 311 corridas: con
    `0 */4 * * *` (6/día programadas) salían 4; con `23 * * * *` (24/día)
    salen **~5**. Un 79% de descarte.
-3. En repo privado cada job factura **1 minuto mínimo** aunque tarde 15 s. A
-   2 min serían 21.600 min/mes contra 2.000 gratis: ~USD 157/mes.
+3. En repo **privado** cada job factura **1 minuto mínimo** aunque tarde 15 s.
+   Por eso este repo es público: así Actions no cuesta nada y se puede usar el
+   `*/5`.
 
-Por eso el cron de GitHub se queda en `23 * * * *` como **red de seguridad
-siempre encendida** (~5 chequeos/día, ~150 min/mes, gratis), y la alta
-frecuencia va en la Mac.
+Ojo con una trampa de los repos públicos: GitHub **desactiva los workflows
+programados tras 60 días sin actividad en el repo**. Un push cualquiera reinicia
+el contador.
 
 ### Vercel
 

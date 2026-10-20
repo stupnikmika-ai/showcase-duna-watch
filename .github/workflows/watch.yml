@@ -2,11 +2,11 @@ name: Vigia Duna - IMAX Norcenter
 
 on:
   schedule:
-    # Cada hora, en un minuto poco congestionado (":00" es el peor) = 24
-    # intentos por dia. GitHub saltea corridas programadas bajo carga: medido
-    # con "0 */4 * * *" salian 4 de las 6 pedidas. Sobredimensionar es la unica
-    # forma de garantizar un piso real; los chequeos de mas son mudos.
-    - cron: "23 * * * *"
+    # Cada 5 min: el minimo que acepta GitHub. Gratis e ilimitado porque el
+    # repo es publico (en privado serian ~8.640 min/mes contra 2.000 de cupo).
+    # Igual GitHub saltea corridas bajo carga, asi que esto es un piso, no una
+    # garantia; el demonio de la Mac es el que cumple los 5 min de verdad.
+    - cron: "*/5 * * * *"
   workflow_dispatch:
     inputs:
       force:
