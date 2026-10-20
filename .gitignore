@@ -2,3 +2,5 @@
 state.json
 watch.log
 __pycache__/
+launchd.out.log
+launchd.err.log
