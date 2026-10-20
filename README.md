@@ -133,7 +133,7 @@ frecuencia va en la Mac.
 `vercel.json` define el cron `0 */4 * * *` sobre `/api/check`.
 
 ```bash
-vercel login          # NO usar la cuenta de la cuenta corporativa
+vercel login          # NO usar la cuenta corporativa de la empresa
 vercel link
 vercel env add TELEGRAM_BOT_TOKEN
 vercel env add TELEGRAM_CHAT_IDS
