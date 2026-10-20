@@ -30,6 +30,20 @@ def _post_form(url, fields, headers, timeout=25):
         return r.status, r.read().decode("utf-8", "replace")
 
 
+def _resumir(status, body):
+    """Nunca devolver el cuerpo crudo: las respuestas de Telegram traen el
+    nombre y el usuario del destinatario, y los logs de Actions son publicos."""
+    try:
+        d = json.loads(body)
+    except (ValueError, TypeError):
+        return "HTTP %s" % status
+    if d.get("ok"):
+        mid = (d.get("result") or {}).get("message_id")
+        return "ok" + (" msg=%s" % mid if mid else "")
+    return "ERROR %s: %s" % (d.get("error_code", status),
+                             str(d.get("description", ""))[:120])
+
+
 def _deaccent(s):
     s = unicodedata.normalize("NFD", s or "")
     s = "".join(c for c in s if unicodedata.category(c) != "Mn")
@@ -57,7 +71,7 @@ def send_email_resend(subject, text, html_body, cfg):
     status, body = _post_json(
         "https://api.resend.com/emails", payload, {"Authorization": "Bearer " + key}
     )
-    return ("resend", status, body[:300], to)
+    return ("resend", "HTTP %s" % status, "%d destinatarios" % len(to))
 
 
 def send_telegram(subject, text, cfg):
@@ -68,12 +82,16 @@ def send_telegram(subject, text, cfg):
         return None
     out = []
     for chat in chats:
-        status, body = _post_json(
-            "https://api.telegram.org/bot%s/sendMessage" % token,
-            {"chat_id": chat, "text": subject + "\n\n" + text, "disable_web_page_preview": False},
-            {},
-        )
-        out.append((chat, status, body[:200]))
+        try:
+            status, body = _post_json(
+                "https://api.telegram.org/bot%s/sendMessage" % token,
+                {"chat_id": chat, "text": subject + "\n\n" + text,
+                 "disable_web_page_preview": False},
+                {},
+            )
+            out.append(_resumir(status, body))
+        except urllib.error.HTTPError as e:
+            out.append(_resumir(e.code, e.read().decode("utf-8", "replace")))
     return ("telegram", out)
 
 
@@ -97,9 +115,9 @@ def send_whatsapp_twilio(subject, text, cfg):
                 {"From": frm_n, "To": to_n, "Body": subject + "\n\n" + text},
                 {"Authorization": "Basic " + auth},
             )
-            out.append((to, status, body[:200]))
+            out.append("HTTP %s" % status)
         except urllib.error.HTTPError as e:
-            out.append((to, e.code, e.read().decode("utf-8", "replace")[:200]))
+            out.append("ERROR %s" % e.code)
     return ("whatsapp", out)
 
 
@@ -122,9 +140,9 @@ def send_sms_twilio(subject, text, cfg):
                 url, {"From": frm, "To": to, "Body": body_txt},
                 {"Authorization": "Basic " + auth},
             )
-            out.append((to, status, body[:200]))
+            out.append("HTTP %s" % status)
         except urllib.error.HTTPError as e:
-            out.append((to, e.code, e.read().decode("utf-8", "replace")[:200]))
+            out.append("ERROR %s" % e.code)
     return ("sms", out)
 
 
