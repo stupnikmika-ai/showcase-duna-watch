@@ -37,7 +37,7 @@ No chequea todo el año. Por defecto:
 estreno            2026-12-14   (RELEASE_DATE)
 empieza a chequear 2026-09-25   (80 días antes, WATCH_DAYS_BEFORE)
 corta              2026-12-14   (WATCH_DAYS_AFTER=0)
-frecuencia         1 intento por hora (24/día)
+frecuencia         cada 2 min en la Mac (launchd) + ~5/día en GitHub
 ```
 
 Fuera de esa ventana el script sale sin hacer nada. Si el estreno se corre, mover
@@ -114,10 +114,19 @@ límite de plan. Push del repo y después:
 El estado va en `actions/cache`, que se accede cada hora y no se enfría. Para
 probar: *Actions → Vigía Duna → Run workflow* con `force` y/o `simulate`.
 
-**Por qué cada hora y no cada 4 h:** GitHub saltea corridas programadas cuando
-tiene carga. Medido sobre 106 corridas, `0 */4 * * *` (6 programadas) ejecutaba
-4 por día. Con 24 intentos el piso real queda muy por encima de lo necesario.
-El minuto `:23` evita el `:00`, que es el más congestionado.
+**GitHub NO sirve para alta frecuencia.** Tres razones medidas, no teóricas:
+
+1. El intervalo mínimo de `schedule` es **5 minutos**. Un `*/2 * * * *` no se
+   honra.
+2. Aunque se pida más, GitHub no lo ejecuta. Medido sobre 311 corridas: con
+   `0 */4 * * *` (6/día programadas) salían 4; con `23 * * * *` (24/día)
+   salen **~5**. Un 79% de descarte.
+3. En repo privado cada job factura **1 minuto mínimo** aunque tarde 15 s. A
+   2 min serían 21.600 min/mes contra 2.000 gratis: ~USD 157/mes.
+
+Por eso el cron de GitHub se queda en `23 * * * *` como **red de seguridad
+siempre encendida** (~5 chequeos/día, ~150 min/mes, gratis), y la alta
+frecuencia va en la Mac.
 
 ### Vercel
 
@@ -150,8 +159,18 @@ Params: `?force` (ignora la ventana), `?dry` (no manda), `?simulate=Titulo`.
 ./install-cron.sh
 ```
 
-Cada 4 h, sobrevive reinicios, y si la Mac estaba dormida corre al despertar.
-Solo chequea con la Mac prendida — sirve de complemento, no de plan único.
+**Cada 2 minutos** (`StartInterval 120`), sobrevive reinicios, y si la Mac estaba
+dormida corre al despertar. Es el único de los dos que alcanza esa frecuencia.
+Su límite es obvio: sólo chequea con la Mac prendida.
+
+Los dos corren en paralelo y **tienen estados separados** (la Mac usa
+`state.json`, GitHub usa `actions/cache`), así que cuando Duna aparezca es
+probable que el aviso llegue dos veces, una por cada lado. Es redundancia, no un
+error. Para que compartan estado y avisen una sola vez hay que apuntar los dos al
+mismo Redis con `KV_REST_API_URL` + `KV_REST_API_TOKEN`.
+
+El log se recorta solo al pasar los 2 MB: a 720 corridas diarias si no crecería
+sin techo.
 
 ## Archivos
 

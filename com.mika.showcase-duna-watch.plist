@@ -8,8 +8,8 @@
     <string>__DIR__/run.sh</string>
   </array>
   <key>WorkingDirectory</key><string>__DIR__</string>
-  <!-- 6 veces por dia = cada 4 h. Si la Mac estaba dormida, launchd lo corre al despertar. -->
-  <key>StartInterval</key><integer>14400</integer>
+  <!-- Cada 2 minutos. Si la Mac estaba dormida, launchd lo corre al despertar. -->
+  <key>StartInterval</key><integer>120</integer>
   <key>RunAtLoad</key><true/>
   <key>StandardOutPath</key><string>__DIR__/launchd.out.log</string>
   <key>StandardErrorPath</key><string>__DIR__/launchd.err.log</string>

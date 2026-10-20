@@ -83,6 +83,25 @@ class Logger:
                 pass
 
 
+LOG_MAX_BYTES = 2 * 1024 * 1024
+LOG_KEEP_LINES = 2000
+
+
+def _rotar_log():
+    """A 720 corridas por dia el log crece sin techo: lo recortamos solo."""
+    try:
+        if os.path.getsize(LOG_PATH) < LOG_MAX_BYTES:
+            return
+    except OSError:
+        return
+    with open(LOG_PATH) as fh:
+        cola = fh.readlines()[-LOG_KEEP_LINES:]
+    tmp = LOG_PATH + ".tmp"
+    with open(tmp, "w") as fh:
+        fh.writelines(cola)
+    os.replace(tmp, LOG_PATH)
+
+
 def hours_since(iso):
     if not iso:
         return 1e9
