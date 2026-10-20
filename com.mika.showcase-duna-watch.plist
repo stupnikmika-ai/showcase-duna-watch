@@ -5,12 +5,15 @@
   <key>Label</key><string>com.mika.showcase-duna-watch</string>
   <key>ProgramArguments</key>
   <array>
-    <string>__DIR__/run.sh</string>
+    <string>__DIR__/loop.sh</string>
   </array>
   <key>WorkingDirectory</key><string>__DIR__</string>
-  <!-- Cada 2 minutos. Si la Mac estaba dormida, launchd lo corre al despertar. -->
-  <key>StartInterval</key><integer>120</integer>
+  <!-- Proceso vivo que chequea cada 2 min desde adentro. StartInterval no sirve:
+       launchd difiere los timers para ahorrar energia (medido: 2m02s y 3m44s).
+       KeepAlive lo revive si se cae o si la Mac vuelve de dormir. -->
+  <key>KeepAlive</key><true/>
   <key>RunAtLoad</key><true/>
+  <key>ThrottleInterval</key><integer>10</integer>
   <key>StandardOutPath</key><string>__DIR__/launchd.out.log</string>
   <key>StandardErrorPath</key><string>__DIR__/launchd.err.log</string>
 </dict>

@@ -159,9 +159,16 @@ Params: `?force` (ignora la ventana), `?dry` (no manda), `?simulate=Titulo`.
 ./install-cron.sh
 ```
 
-**Cada 2 minutos** (`StartInterval 120`), sobrevive reinicios, y si la Mac estaba
-dormida corre al despertar. Es el único de los dos que alcanza esa frecuencia.
-Su límite es obvio: sólo chequea con la Mac prendida.
+**Cada 2 minutos**, sobrevive reinicios, y si la Mac estaba dormida arranca al
+despertar. Es el único de los dos que alcanza esa frecuencia. Su límite es
+obvio: sólo chequea con la Mac prendida.
+
+No usa `StartInterval`: launchd agrupa y difiere los timers para ahorrar
+energía, sobre todo con la Mac en batería. Medido con `StartInterval 120`, las
+corridas salieron a 2m02s, 3m44s y 1m00s — nada parecido a un intervalo fijo.
+En su lugar corre `loop.sh`, un proceso vivo que duerme `sleep 120` entre
+chequeos, con `KeepAlive` para que launchd lo reviva si se cae. El intervalo se
+cambia con `DUNA_INTERVALO` (segundos).
 
 > **El proyecto NO puede vivir en `~/Desktop`.** macOS protege Desktop, Documents
 > y Downloads con TCC, y un agente de launchd sin Full Disk Access no puede leer
