@@ -37,7 +37,7 @@ No chequea todo el año. Por defecto:
 estreno            2026-12-14   (RELEASE_DATE)
 empieza a chequear 2026-09-25   (80 días antes, WATCH_DAYS_BEFORE)
 corta              2026-12-14   (WATCH_DAYS_AFTER=0)
-frecuencia         cada 2 min en la Mac (launchd) + ~5/día en GitHub
+frecuencia         cada 5 min en la Mac (launchd) + ~5/día en GitHub
 ```
 
 Fuera de esa ventana el script sale sin hacer nada. Si el estreno se corre, mover
@@ -166,9 +166,17 @@ obvio: sólo chequea con la Mac prendida.
 No usa `StartInterval`: launchd agrupa y difiere los timers para ahorrar
 energía, sobre todo con la Mac en batería. Medido con `StartInterval 120`, las
 corridas salieron a 2m02s, 3m44s y 1m00s — nada parecido a un intervalo fijo.
-En su lugar corre `loop.sh`, un proceso vivo que duerme `sleep 120` entre
-chequeos, con `KeepAlive` para que launchd lo reviva si se cae. El intervalo se
-cambia con `DUNA_INTERVALO` (segundos).
+En su lugar corre `loop.sh`, un proceso vivo que duerme entre chequeos, con
+`KeepAlive` para que launchd lo reviva si se cae.
+
+El intervalo sale de **`DUNA_INTERVALO`** en el `.env` (segundos, default 300).
+Correr en la Mac **no cuesta nada a ninguna frecuencia** — el límite de costo es
+sólo de GitHub. Para cambiarlo:
+
+```bash
+# editar DUNA_INTERVALO en .env y después
+launchctl kickstart -k gui/$(id -u)/com.mika.showcase-duna-watch
+```
 
 > **El proyecto NO puede vivir en `~/Desktop`.** macOS protege Desktop, Documents
 > y Downloads con TCC, y un agente de launchd sin Full Disk Access no puede leer
